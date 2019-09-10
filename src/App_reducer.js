@@ -106,6 +106,18 @@ const initialState = {
     액션 종류에 따라 board_list, board_save, board_read, board_remove 호출해서 사용.!
       -> action type 이 같이 파라미터로 제공.! 
 
+   글저장(BOARD_SAVE)은 글 번호(brdno) 값이 있으면 수정.! 
+                        boards의 모든 행을 검사해서(map), 글 번호가 같은 게시물이면 새로운 게시물(data) 반환,
+                        그렇지 않으면 기존 게시물(row)를 반환해서 새로운 배열을 생성
+
+   
+                        return {...state, boards: boards.map(row => data.brdno === row.brdno ? {...data }: row), selectedBoard: {} };
+                          ㄴ선택한 행은 selectedBoard(){} 로 초기화, 기존 state 값(...state)과 같이 반환.
+                          ㄴstate에 변수가 3개 있으니 결국, maxNo 를 같이 반환한 것과 같다.
+                          ㄴ(=) return {maxNo: state.maxNo, boards: boards.map(생략), selectedBoard: {} };
+                                  ㄴ 생각 조금만 해보면 알 수 있음.
+                          ㄴ 변수가 많을 경우, 많은 변수를 다 나열하지말고 ...state 와 같이작성하는게 좋음.!!    
+
 */
 
 export default function board_reducer(state = initialState, action) {
@@ -115,18 +127,33 @@ export default function board_reducer(state = initialState, action) {
         case BOARD_SAVE:
             let data = action.data;
             let maxNo = state.maxNo;
-            if (!data.brdno) {    // new : Insert
+            if (!data.brdno) {    // 6) new : Insert ( 글 번호 값이 없을 경우)
                 return {maxNo: maxNo+1, boards: boards.concat({...data, brdno: maxNo, brddate: new Date()}), selectedBoard: {} };
+                // 7) ㄴ기존 게시물 데이터(boards)에 새로운 게시물(data)을 추가(concat)해주고,  글 번호(maxNo)를 1 증가 시키는 라인.
             } 
             return {...state, boards: boards.map(row => data.brdno === row.brdno ? {...data }: row), selectedBoard: {} };
         case BOARD_REMOVE:
              return {...state, boards: boards.filter(row => row.brdno !== action.brdno), selectedBoard: {}};
+             // 8) ㄴ 글 삭제는 게시물 데이터(boards)에서 삭제할 글 번호에 해당하는 행을 찾아서 지우는 방식이 아님 !! 중요!! 아님!!
+             //       삭제할 게시글이 아닌 게시물(보존할게시물)만 모아서(filter) 다시 생성해주는 방식으로 구현.! 
+             //       즉, 눈에만 안보이게 만드는거? , 여러가지 이유 때문에 이렇게 한다고 하는데 자세히는 모름.
         case BOARD_READ:
              return {
                  ...state,
                  selectedBoard: boards.find(row => row.brdno === action.brdno)
             };
+
+            // 9) 주어진 글 번호(brdno)에 맞는 게시글을 찾아서(find) selectedBoard 로 지정하면 끝.
+            //    나머지 ( maxNo, boards )는 ...state로 지정해서 반환.!! 
         default:
             return state;
     }
 }
+
+/*  
+  10)
+    React 로 작성한 코드를 Redux 로 바꾸는것은, 지금까지 정리한 App_reducer.js 의 내용이 핵심!! 
+    다른 컴퍼넌트에서는 호출해서 사용만 하면 끝~ 
+    
+
+*/
